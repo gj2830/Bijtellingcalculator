@@ -1,0 +1,4 @@
+# GitHub Pages: alleen bijtelling-kenteken.html en de README publiceren.
+exclude:
+  - src/
+  - build.py

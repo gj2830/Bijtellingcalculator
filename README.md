@@ -6,9 +6,9 @@ Twee losse HTML-bestanden die de bijtelling voor een auto van de zaak bepalen me
 - **`bijtelling-kenteken.html`** – bijtelling voor één kenteken en één maand, met kopieerknop (opgemaakt voor Word/Outlook).
 - **`bijtelling-excelcontrole.html`** – controleert een Excel-lijst met auto's van de zaak en levert een Excel met de bevindingen.
 
-Online te gebruiken via GitHub Pages:
-[kentekencheck](https://gj2830.github.io/Bijtellingcalculator/bijtelling-kenteken.html) en
-[Excel-controle](https://gj2830.github.io/Bijtellingcalculator/bijtelling-excelcontrole.html).
+De kentekencheck is online te gebruiken via GitHub Pages:
+[bijtelling-kenteken.html](https://gj2830.github.io/Bijtellingcalculator/bijtelling-kenteken.html).
+De Excel-controle staat niet in deze repo of op Pages; maak die lokaal met `python build.py`.
 
 Alleen deze twee bestanden verspreiden. Ze werken zelfstandig: dubbelklikken om te openen in de browser, geen installatie nodig.
 De bestanden in `src/` zijn bronbestanden en werken niet los.
