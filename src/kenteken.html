@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bijtelling per kenteken</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Bijtelling per kenteken</h1>
+      <p class="sub">Haal de voertuiggegevens op bij de RDW en bereken de bijtelling voor een maand.</p>
+    </header>
+
+    <form id="zoek" class="card" autocomplete="off">
+      <div class="row">
+        <label class="grow">Kenteken
+          <input id="kenteken" class="kenteken" placeholder="AB-123-C" maxlength="10" required>
+        </label>
+        <label>Maand
+          <input id="maand" type="month" required>
+        </label>
+        <button type="submit" id="ophalen">Ophalen</button>
+      </div>
+      <p id="melding" class="melding" hidden></p>
+    </form>
+
+    <section id="resultaat" hidden>
+      <div class="card">
+        <h2 id="voertuigNaam"></h2>
+        <dl class="gegevens">
+          <dt>Datum eerste toelating</dt><dd id="dToelating"></dd>
+          <dt>Eerste tenaamstelling NL</dt><dd id="dTenaamstelling"></dd>
+          <dt>Brandstof</dt><dd id="dBrandstof"></dd>
+          <dt>Catalogusprijs (RDW)</dt><dd id="dCatalogus"></dd>
+          <dt>Leeftijd op 1e van de maand</dt><dd id="dLeeftijd"></dd>
+        </dl>
+      </div>
+
+      <div class="card">
+        <h2>Uitgangspunten</h2>
+        <div class="grid">
+          <label>Catalogusprijs (incl. btw en bpm)
+            <input id="catalogusprijs" type="number" min="0" step="1">
+          </label>
+          <label>Categorie
+            <select id="categorie">
+              <option value="standaard">Brandstof / hybride (standaard)</option>
+              <option value="elektrisch">Volledig elektrisch</option>
+              <option value="waterstof">Waterstof / zonnecelauto (geen cap)</option>
+            </select>
+          </label>
+          <label id="dagwaardeLabel" hidden>Waarde in het economisch verkeer (youngtimer)
+            <input id="dagwaarde" type="number" min="0" step="1">
+          </label>
+        </div>
+      </div>
+
+      <div class="card uitkomst">
+        <div class="kop">
+          <h2>Bijtelling <span id="maandLabel"></span></h2>
+          <button type="button" id="kopieer" class="secundair">Kopiëren</button>
+        </div>
+        <div class="totaal">
+          <div>
+            <span class="label">Bijtelling per maand</span>
+            <span id="perMaand" class="bedrag"></span>
+          </div>
+        </div>
+        <table id="opbouw" class="opbouw"></table>
+        <ul id="toelichting" class="toelichting"></ul>
+      </div>
+    </section>
+
+    <!-- deel: uitleg.html -->
+  </main>
+
+  <script src="tarieven.js"></script>
+  <script src="rekenen.js"></script>
+  <script src="kenteken.js"></script>
+</body>
+</html>

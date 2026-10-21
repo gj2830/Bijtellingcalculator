@@ -1,0 +1,835 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bijtelling per kenteken</title>
+  <style>
+:root {
+  --bg: #f5f6f8;
+  --card: #ffffff;
+  --text: #1c2330;
+  --muted: #5f6b7a;
+  --border: #dde1e7;
+  --accent: #1f5fbf;
+  --accent-text: #ffffff;
+  --warn-bg: #fff4e0;
+  --warn-text: #7a4b00;
+  --error-bg: #fde8e8;
+  --error-text: #9b1c1c;
+  --plate: #f7c600;
+  --ok-bg: #e3f4e8;
+  --ok-text: #1d6b36;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12161c;
+    --card: #1b2028;
+    --text: #e6e9ee;
+    --muted: #9aa5b4;
+    --border: #2d3440;
+    --accent: #5b9bff;
+    --accent-text: #0b1220;
+    --warn-bg: #3a2c10;
+    --warn-text: #f3cf86;
+    --error-bg: #3b1a1a;
+    --error-text: #f5b1b1;
+    --ok-bg: #16301f;
+    --ok-text: #9fdcb2;
+  }
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+main {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 32px 16px 48px;
+}
+
+h1 { margin: 0; font-size: 1.8rem; }
+h2 { margin: 0 0 12px; font-size: 1.15rem; }
+.sub { margin: 4px 0 20px; color: var(--muted); }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+input, select, button {
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  min-height: 42px;
+}
+
+input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+button {
+  background: var(--accent);
+  color: var(--accent-text);
+  border: none;
+  font-weight: 600;
+  padding: 8px 20px;
+  cursor: pointer;
+  align-self: flex-end;
+}
+button:disabled { opacity: 0.6; cursor: wait; }
+button.secundair {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  padding: 6px 14px;
+  min-height: 36px;
+  align-self: auto;
+  width: auto;
+}
+
+.kop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.kop h2 { margin: 0; }
+
+.row { display: flex; gap: 12px; flex-wrap: wrap; }
+.grow { flex: 1 1 180px; }
+
+.kenteken {
+  background: var(--plate);
+  color: #111;
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  border-color: #c9a200;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.gegevens {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 16px;
+  margin: 0;
+}
+.gegevens dt { color: var(--muted); }
+.gegevens dd { margin: 0; font-weight: 500; }
+
+.melding {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--error-bg);
+  color: var(--error-text);
+}
+
+.totaal {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.totaal > div { display: flex; flex-direction: column; }
+.totaal .label { color: var(--muted); font-size: 0.85rem; }
+.bedrag { font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+td, th { padding: 6px 4px; border-bottom: 1px solid var(--border); text-align: left; }
+td.num, th.num { text-align: right; }
+tr.som td { font-weight: 700; border-bottom: none; }
+
+.toelichting { margin: 16px 0 0; padding-left: 20px; color: var(--muted); font-size: 0.9rem; }
+.toelichting li.waarschuwing {
+  list-style: none;
+  margin-left: -20px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  margin-bottom: 6px;
+}
+
+summary { cursor: pointer; font-weight: 600; }
+.tarieven { margin-top: 12px; font-size: 0.9rem; }
+.uitleg p { margin: 0 0 10px; }
+.uitleg p:last-child { margin-bottom: 0; }
+.klein { font-size: 0.85rem; color: var(--muted); }
+.disclaimer { text-align: center; }
+a { color: var(--accent); }
+
+.check { flex-direction: row; align-items: center; gap: 8px; margin-bottom: 8px; }
+.check input { min-height: 0; }
+.scroll { overflow-x: auto; }
+table.controle { font-size: 0.85rem; }
+table.controle td { vertical-align: top; }
+.nowrap { white-space: nowrap; }
+.samenvatting { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.teller, .label-status { padding: 2px 10px; border-radius: 999px; font-weight: 600; font-size: 0.85rem; white-space: nowrap; }
+.fout { background: var(--error-bg); color: var(--error-text); }
+.letop { background: var(--warn-bg); color: var(--warn-text); }
+.ok { background: var(--ok-bg); color: var(--ok-text); }
+.bev-fout { color: var(--error-text); }
+.bev-letop { color: var(--warn-text); }
+.bev-info { color: var(--muted); }
+.uitleg ul { margin: 0 0 10px; padding-left: 20px; }
+
+@media (max-width: 480px) {
+  .bedrag { font-size: 1.6rem; }
+  .gegevens { grid-template-columns: 1fr; }
+  .gegevens dd { margin-bottom: 6px; }
+  button { width: 100%; }
+}
+</style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Bijtelling per kenteken</h1>
+      <p class="sub">Haal de voertuiggegevens op bij de RDW en bereken de bijtelling voor een maand.</p>
+    </header>
+
+    <form id="zoek" class="card" autocomplete="off">
+      <div class="row">
+        <label class="grow">Kenteken
+          <input id="kenteken" class="kenteken" placeholder="AB-123-C" maxlength="10" required>
+        </label>
+        <label>Maand
+          <input id="maand" type="month" required>
+        </label>
+        <button type="submit" id="ophalen">Ophalen</button>
+      </div>
+      <p id="melding" class="melding" hidden></p>
+    </form>
+
+    <section id="resultaat" hidden>
+      <div class="card">
+        <h2 id="voertuigNaam"></h2>
+        <dl class="gegevens">
+          <dt>Datum eerste toelating</dt><dd id="dToelating"></dd>
+          <dt>Eerste tenaamstelling NL</dt><dd id="dTenaamstelling"></dd>
+          <dt>Brandstof</dt><dd id="dBrandstof"></dd>
+          <dt>Catalogusprijs (RDW)</dt><dd id="dCatalogus"></dd>
+          <dt>Leeftijd op 1e van de maand</dt><dd id="dLeeftijd"></dd>
+        </dl>
+      </div>
+
+      <div class="card">
+        <h2>Uitgangspunten</h2>
+        <div class="grid">
+          <label>Catalogusprijs (incl. btw en bpm)
+            <input id="catalogusprijs" type="number" min="0" step="1">
+          </label>
+          <label>Categorie
+            <select id="categorie">
+              <option value="standaard">Brandstof / hybride (standaard)</option>
+              <option value="elektrisch">Volledig elektrisch</option>
+              <option value="waterstof">Waterstof / zonnecelauto (geen cap)</option>
+            </select>
+          </label>
+          <label id="dagwaardeLabel" hidden>Waarde in het economisch verkeer (youngtimer)
+            <input id="dagwaarde" type="number" min="0" step="1">
+          </label>
+        </div>
+      </div>
+
+      <div class="card uitkomst">
+        <div class="kop">
+          <h2>Bijtelling <span id="maandLabel"></span></h2>
+          <button type="button" id="kopieer" class="secundair">Kopiëren</button>
+        </div>
+        <div class="totaal">
+          <div>
+            <span class="label">Bijtelling per maand</span>
+            <span id="perMaand" class="bedrag"></span>
+          </div>
+        </div>
+        <table id="opbouw" class="opbouw"></table>
+        <ul id="toelichting" class="toelichting"></ul>
+      </div>
+    </section>
+
+    <details class="card">
+      <summary>Bijtellingspercentages per jaar</summary>
+      <table id="tarieventabel" class="tarieven"></table>
+      <p class="klein">Aanpassen of aanvullen kan in de constante <code>BIJTELLING_TARIEVEN</code> (bestand <code>tarieven.js</code>).</p>
+    </details>
+
+    <section class="card uitleg">
+      <h2>Zo wordt de bijtelling bepaald</h2>
+      <p>
+        De bijtelling is een percentage van de catalogusprijs (incl. btw en bpm). Brandstofauto's en
+        (plug-in) hybrides hebben 22%. Volledig elektrische auto's hebben een lager percentage tot een
+        maximale cataloguswaarde (de <em>cap</em>); over het deel daarboven geldt 22%. Voor waterstof- en
+        zonnecelauto's geldt het lagere percentage over de hele catalogusprijs.
+      </p>
+      <p>
+        <strong>60 maanden vast.</strong> Vanaf de 1e dag van de maand na de datum eerste toelating gelden
+        60 maanden lang de regels van het jaar van eerste toelating. Een eigenaarswissel verandert daar niets aan.
+      </p>
+      <p>
+        <strong>Daarna: elk jaar de regels van dat jaar.</strong> Na de 60 maanden begint geen nieuwe vaste
+        termijn, maar gelden steeds de regels van het lopende kalenderjaar. Voorbeeld: een elektrische
+        auto uit maart 2021 heeft t/m maart 2026 12% tot € 40.000, van april t/m december 2026 18% tot
+        € 30.000, in 2027 20% tot € 30.000 en vanaf 2028 22%.
+      </p>
+      <p>
+        <strong>Auto's van vóór 2017.</strong> Is de datum eerste toelating uiterlijk 31 december 2016, dan blijft
+        het standaardpercentage 25% (in plaats van 22%), zonder einddatum (art. 36c Wet LB). Voor een elektrische
+        auto gaat daar een korting af. Die hangt af van de <em>datum eerste tenaamstelling in Nederland</em>: vanaf de
+        1e van de maand daarna geldt 60 maanden de korting van dat jaar, daarna de korting van het lopende jaar.
+        Voorbeeld uit het Handboek Loonheffingen: eerste toelating februari 2016, tenaamstelling mei 2021 → t/m mei 2026
+        15% tot € 40.000, daarna 21% tot € 30.000 (en 25% daarboven).
+        De datum eerste toelating is de eerste ingebruikname, ook in het buitenland.
+      </p>
+      <p>
+        <strong>Youngtimers.</strong> Is de auto meer dan 16 jaar geleden voor het eerst toegelaten
+        (t/m 2025: 15 jaar), dan is de bijtelling 35% van de waarde in het economisch verkeer (dagwaarde).
+        Was de auto op 31 december 2025 al ouder dan 15 jaar en stond hij toen al ter beschikking,
+        dan blijft deze regeling gelden.
+      </p>
+      <p class="klein">
+        Bronnen: <a href="https://wetten.overheid.nl/BWBR0002471/2026-01-01#HoofdstukIII_Paragraaf3.2_Artikel13bis" target="_blank" rel="noopener">art. 13bis</a> en
+        <a href="https://wetten.overheid.nl/BWBR0002471/2026-01-01#HoofdstukVIII_Artikel36c" target="_blank" rel="noopener">art. 36c Wet op de loonbelasting 1964</a>,
+        <a href="https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/belastingdienst/zakelijk/winst/inkomstenbelasting/veranderingen-inkomstenbelasting-2026/bijtelling-privegebruik-auto-2026" target="_blank" rel="noopener">Belastingdienst – bijtelling 2026</a>,
+        <a href="https://download.belastingdienst.nl/belastingdienst/docs/handboek-loonheffingen-lh0221t61fd.pdf" target="_blank" rel="noopener">Handboek Loonheffingen 2026</a> (par. 23.3).
+        Het tarief voor 2027 (20%) is nog niet door de Belastingdienst gepubliceerd.
+      </p>
+    </section>
+
+    <p class="klein disclaimer">
+      Gegevens: <a href="https://opendata.rdw.nl" target="_blank" rel="noopener">RDW Open Data</a>.
+      Deze berekening is een indicatie; controleer bij twijfel bij de Belastingdienst of je salarisadministratie.
+    </p>
+  </main>
+
+  <script>
+// Bijtellingspercentages per jaar en categorie.
+//
+// Het jaar is het "peiljaar": het jaar van de datum eerste toelating, of — na afloop
+// van een periode van 60 maanden — het jaar waarin de nieuwe periode begint.
+//
+// Categorieën:
+//   standaard   – alle auto's met uitstoot (benzine, diesel, hybride, plug-in hybride, LPG, ...)
+//   elektrisch  – volledig elektrisch (geen CO2-uitstoot); verlaagd tarief tot de cap
+//   waterstof   – waterstof- en zonnecelauto's; vanaf 2020 geen cap
+//
+// cap = maximale cataloguswaarde waarover het verlaagde percentage geldt (null = geen cap).
+// Over het deel boven de cap geldt het standaardpercentage.
+//
+// Controleer nieuwe jaren altijd bij de Belastingdienst (tabel bijtelling auto van de zaak).
+const BIJTELLING_TARIEVEN = {
+  2017: { standaard: 22, elektrisch: { pct: 4, cap: null }, waterstof: { pct: 4, cap: null } },
+  2018: { standaard: 22, elektrisch: { pct: 4, cap: null }, waterstof: { pct: 4, cap: null } },
+  2019: { standaard: 22, elektrisch: { pct: 4, cap: 50000 }, waterstof: { pct: 4, cap: 50000 } },
+  2020: { standaard: 22, elektrisch: { pct: 8, cap: 45000 }, waterstof: { pct: 8, cap: null } },
+  2021: { standaard: 22, elektrisch: { pct: 12, cap: 40000 }, waterstof: { pct: 12, cap: null } },
+  2022: { standaard: 22, elektrisch: { pct: 16, cap: 35000 }, waterstof: { pct: 16, cap: null } },
+  2023: { standaard: 22, elektrisch: { pct: 16, cap: 30000 }, waterstof: { pct: 16, cap: null } },
+  2024: { standaard: 22, elektrisch: { pct: 16, cap: 30000 }, waterstof: { pct: 16, cap: null } },
+  2025: { standaard: 22, elektrisch: { pct: 17, cap: 30000 }, waterstof: { pct: 17, cap: null } },
+  2026: { standaard: 22, elektrisch: { pct: 18, cap: 30000 }, waterstof: { pct: 18, cap: null } },
+  2027: { standaard: 22, elektrisch: { pct: 20, cap: 30000 }, waterstof: { pct: 20, cap: null } },
+  2028: { standaard: 22, elektrisch: { pct: 22, cap: null }, waterstof: { pct: 22, cap: null } },
+};
+
+// Art. 36c Wet LB: auto's met een datum eerste toelating t/m 31-12-2016 houden onbeperkt 25% als
+// standaardpercentage. Een korting voor nulemissieauto's (standaard min verlaagd percentage, tot de cap)
+// gaat daar vanaf. Youngtimers vallen hier niet onder.
+const OUD_REGIME = { totEnMet: new Date(2016, 11, 31), standaard: 25 };
+
+// Youngtimers:bijtelling over de waarde in het economisch verkeer.
+// leeftijdVanaf = leeftijdsgrens ("meer dan X jaar geleden in gebruik genomen") vanaf dat jaar.
+// Overgangsregel: een auto die op 31 december van het voorgaande jaar al youngtimer was, blijft dat.
+const YOUNGTIMER = { pct: 35, leeftijdVanaf: { 2017: 15, 2026: 16 } };
+
+// Termijn waarin de regels van het jaar van eerste toelating blijven gelden (art. 13bis Wet LB).
+// Daarna gelden steeds de regels van het lopende kalenderjaar.
+const PERIODE_MAANDEN = 60;
+
+</script>
+  <script>
+// Gedeeld rekenwerk: RDW-koppeling, bijtellingsregels en hulpfuncties.
+// Wordt gebruikt door de kentekencheck (kenteken.js) en de Excel-controle (controle.js).
+
+const RDW_VOERTUIGEN = "https://opendata.rdw.nl/resource/m9d7-ebf2.json";
+const RDW_BRANDSTOF = "https://opendata.rdw.nl/resource/8ys7-d773.json";
+
+const euro = new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" });
+const euroHeel = new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+const datumFmt = new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "long", year: "numeric" });
+const maandFmt = new Intl.DateTimeFormat("nl-NL", { month: "long", year: "numeric" });
+
+const $ = (id) => document.getElementById(id);
+
+
+// ---------- RDW ----------
+
+function normaliseerKenteken(invoer) {
+  return invoer.toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+async function haalVoertuigOp(kenteken) {
+  return (await haalVoertuigenOp([kenteken])).get(kenteken) ?? null;
+}
+
+// Haalt kentekens in blokken op; geeft een Map kenteken → voertuig (onbekende kentekens ontbreken).
+async function haalVoertuigenOp(kentekens, voortgang) {
+  const uniek = [...new Set(kentekens)].filter(Boolean);
+  const resultaat = new Map();
+  const BLOK = 100;
+
+  for (let i = 0; i < uniek.length; i += BLOK) {
+    const deel = uniek.slice(i, i + BLOK);
+    const query = `?$limit=5000&$where=${encodeURIComponent(`kenteken in(${deel.map((k) => `'${k}'`).join(",")})`)}`;
+    const [voertuigen, brandstoffen] = await Promise.all([
+      fetch(RDW_VOERTUIGEN + query).then(controleerResponse),
+      fetch(RDW_BRANDSTOF + query).then(controleerResponse),
+    ]);
+    for (const v of voertuigen) {
+      const eigen = brandstoffen
+        .filter((b) => b.kenteken === v.kenteken)
+        .sort((a, b) => Number(a.brandstof_volgnummer) - Number(b.brandstof_volgnummer));
+      resultaat.set(v.kenteken, {
+        kenteken: v.kenteken,
+        merk: v.merk,
+        model: v.handelsbenaming,
+        voertuigsoort: v.voertuigsoort,
+        eersteToelating: parseRdwDatum(v.datum_eerste_toelating),
+        eersteTenaamstellingNL: parseRdwDatum(v.datum_eerste_tenaamstelling_in_nederland),
+        catalogusprijs: v.catalogusprijs ? Number(v.catalogusprijs) : null,
+        brandstoffen: eigen.map((b) => b.brandstof_omschrijving),
+      });
+    }
+    voortgang?.(Math.min(i + BLOK, uniek.length), uniek.length);
+  }
+  return resultaat;
+}
+
+async function controleerResponse(res) {
+  if (!res.ok) throw new Error(`RDW gaf foutcode ${res.status}`);
+  return res.json();
+}
+
+function parseRdwDatum(s) {
+  if (!s || !/^\d{8}$/.test(s)) return null;
+  return new Date(Number(s.slice(0, 4)), Number(s.slice(4, 6)) - 1, Number(s.slice(6, 8)));
+}
+
+function bepaalCategorie(brandstoffen) {
+  if (brandstoffen.length === 0) return "standaard";
+  const set = new Set(brandstoffen.map((b) => b.toLowerCase()));
+  const alleenZeroEmissie = [...set].every((b) => b === "elektriciteit" || b === "waterstof");
+  if (!alleenZeroEmissie) return "standaard";
+  return set.has("waterstof") ? "waterstof" : "elektrisch";
+}
+
+// ---------- Berekening ----------
+
+function maandenTussen(van, tot) {
+  return (tot.getFullYear() - van.getFullYear()) * 12 + (tot.getMonth() - van.getMonth());
+}
+
+function plusMaanden(datum, n) {
+  return new Date(datum.getFullYear(), datum.getMonth() + n, 1);
+}
+
+function tarievenVoorJaar(jaar) {
+  const jaren = Object.keys(BIJTELLING_TARIEVEN).map(Number).sort((a, b) => a - b);
+  const eerste = jaren[0];
+  const laatste = jaren[jaren.length - 1];
+  const gebruikt = Math.min(Math.max(jaar, eerste), laatste);
+  return { jaar: gebruikt, tarief: BIJTELLING_TARIEVEN[gebruikt], buitenTabel: jaar !== gebruikt };
+}
+
+// Gedurende 60 maanden, te rekenen vanaf de eerste dag van de maand na de peildatum, gelden de
+// regels van het jaar van de peildatum. Daarna gelden steeds de regels van het lopende kalenderjaar;
+// er start geen nieuwe vaste termijn. Peildatum = datum eerste toelating; bij een eerste toelating
+// vóór 2017 de datum eerste tenaamstelling in Nederland (Handboek Loonheffingen 2026, par. 23.3.4).
+function bepaalTermijn(peildatum, maand) {
+  const start = new Date(peildatum.getFullYear(), peildatum.getMonth() + 1, 1);
+  const eind = plusMaanden(start, PERIODE_MAANDEN); // eerste maand na de termijn
+  const binnenTermijn = maand < eind;
+  return { start, eind, binnenTermijn, peiljaar: binnenTermijn ? peildatum.getFullYear() : maand.getFullYear() };
+}
+
+function youngtimerGrens(jaar) {
+  const jaren = Object.keys(YOUNGTIMER.leeftijdVanaf).map(Number).filter((j) => j <= jaar);
+  return jaren.length ? YOUNGTIMER.leeftijdVanaf[Math.max(...jaren)] : null;
+}
+
+// Ouder dan de grens van dat jaar, of op 31 december van het jaar ervoor al youngtimer (overgangsregel).
+function isYoungtimer(eersteToelating, datum) {
+  const grens = youngtimerGrens(datum.getFullYear());
+  if (grens == null) return false;
+  const verjaardag = new Date(eersteToelating.getFullYear() + grens, eersteToelating.getMonth(), eersteToelating.getDate());
+  return datum > verjaardag || isYoungtimer(eersteToelating, new Date(datum.getFullYear() - 1, 11, 31));
+}
+
+/**
+ * Berekent de bijtelling voor één kalendermaand.
+ * Geeft regels (opbouw), totalen en toelichtingen terug.
+ */
+function berekenBijtelling({ eersteToelating, eersteTenaamstelling, maand, catalogusprijs, categorie, dagwaarde }) {
+  const toelichting = [];
+  const waarschuwingen = [];
+  const regels = [];
+
+  if (isYoungtimer(eersteToelating, maand)) {
+    const basis = dagwaarde ?? 0;
+    const jaar = basis * YOUNGTIMER.pct / 100;
+    const grens = youngtimerGrens(maand.getFullYear());
+    regels.push({ omschrijving: `${YOUNGTIMER.pct}% van waarde in het economisch verkeer (${euroHeel.format(basis)})`, jaar });
+    toelichting.push(`Youngtimer: de bijtelling wordt berekend over de dagwaarde, niet over de catalogusprijs.`);
+    const verjaardag = new Date(eersteToelating.getFullYear() + grens, eersteToelating.getMonth(), eersteToelating.getDate());
+    if (!(maand > verjaardag)) {
+      waarschuwingen.push(`De auto is nog geen ${grens} jaar oud; de youngtimerregeling geldt via de overgangsregel, alleen als de auto vorig jaar al ter beschikking stond.`);
+    }
+    if (!dagwaarde) waarschuwingen.push("Vul de waarde in het economisch verkeer (dagwaarde) in.");
+    return afronden({ regels, toelichting, waarschuwingen, youngtimer: true, pct: YOUNGTIMER.pct, cap: null, basis });
+  }
+
+  // Auto van vóór 2017: de termijn loopt vanaf de eerste tenaamstelling in Nederland (bij import later).
+  const oud = eersteToelating <= OUD_REGIME.totEnMet;
+  const peildatum = oud && eersteTenaamstelling ? eersteTenaamstelling : eersteToelating;
+  const peildatumNaam = peildatum === eersteToelating ? "eerste toelating" : "eerste tenaamstelling in Nederland";
+  if (oud && !eersteTenaamstelling && categorie !== "standaard") {
+    waarschuwingen.push("Geen datum eerste tenaamstelling bekend; bij een auto van vóór 2017 bepaalt die de termijn. Eerste toelating gebruikt.");
+  }
+  const termijn = bepaalTermijn(peildatum, maand);
+  const { jaar: tabelJaar, tarief: tabelTarief, buitenTabel } = tarievenVoorJaar(termijn.peiljaar);
+  if (buitenTabel) {
+    waarschuwingen.push(`Geen tarieven voor ${termijn.peiljaar} vastgelegd; tarieven van ${tabelJaar} gebruikt. Vul de tarieventabel aan.`);
+  }
+  let tarief = tabelTarief;
+  if (oud) {
+    tarief = oudRegime(tabelTarief);
+    toelichting.push(
+      `Eerste toelating vóór 2017: standaardpercentage ${OUD_REGIME.standaard}% (art. 36c Wet LB)` +
+        (categorie === "standaard" ? "." : "; de korting voor nulemissie gaat daarvan af.")
+    );
+  }
+
+  const prijs = catalogusprijs ?? 0;
+  // pct = het (verlaagde) percentage dat van toepassing is; boven de cap geldt het standaardpercentage.
+  const { pct, cap } = categorie === "standaard" ? { pct: tarief.standaard, cap: null } : tarief[categorie];
+  if (categorie === "standaard") {
+    regels.push({ omschrijving: `${tarief.standaard}% over ${euroHeel.format(prijs)}`, jaar: prijs * tarief.standaard / 100 });
+  } else {
+    const laag = cap == null ? prijs : Math.min(prijs, cap);
+    const hoog = prijs - laag;
+    regels.push({ omschrijving: `${pct}% over ${euroHeel.format(laag)}${cap != null ? ` (cap ${euroHeel.format(cap)})` : ""}`, jaar: laag * pct / 100 });
+    if (hoog > 0) {
+      regels.push({ omschrijving: `${tarief.standaard}% over het meerdere (${euroHeel.format(hoog)})`, jaar: hoog * tarief.standaard / 100 });
+    }
+  }
+
+  // De 60-maandstermijn gaat alleen over de korting voor nulemissie; bij brandstof/hybride speelt hij geen rol.
+  const eindLaatsteMaand = new Date(termijn.eind.getFullYear(), termijn.eind.getMonth(), 0);
+  if (categorie === "standaard") {
+    toelichting.push("Brandstofauto of hybride: geen korting, dus de 60-maandstermijn speelt geen rol.");
+  } else if (termijn.binnenTermijn) {
+    toelichting.push(
+      `Binnen de 60-maandstermijn (${maandFmt.format(termijn.start)} t/m ${maandFmt.format(eindLaatsteMaand)}): de regels van ${termijn.peiljaar}, het jaar van ${peildatumNaam}, gelden.`
+    );
+  } else {
+    toelichting.push(
+      `De 60-maandstermijn is verstreken (${maandFmt.format(eindLaatsteMaand)}): de regels van het lopende jaar ${termijn.peiljaar} gelden. Deze kunnen elk jaar wijzigen.`
+    );
+  }
+  if (!catalogusprijs) waarschuwingen.push("Geen catalogusprijs bekend bij de RDW; vul deze handmatig in.");
+
+  return afronden({ regels, toelichting, waarschuwingen, termijn, youngtimer: false, pct, cap, standaard: tarief.standaard, basis: prijs });
+}
+
+// Tarieven voor een auto van vóór 2017: hoger standaardpercentage, dezelfde korting en cap.
+function oudRegime(t) {
+  const verschuif = ({ pct, cap }) => ({ pct: OUD_REGIME.standaard - (t.standaard - pct), cap });
+  return { standaard: OUD_REGIME.standaard, elektrisch: verschuif(t.elektrisch), waterstof: verschuif(t.waterstof) };
+}
+
+function afronden({ regels, ...rest }) {
+  const perJaar = regels.reduce((s, r) => s + r.jaar, 0);
+  return { regels, perJaar, perMaand: perJaar / 12, ...rest };
+}
+
+// ---------- Hulpfuncties ----------
+
+// Kenteken met streepjes: splits op overgangen letter/cijfer, groepen van 4 in 2+2.
+function formatteerKenteken(k) {
+  return (k.match(/[A-Z]+|\d+/g) ?? [k])
+    .flatMap((g) => (g.length === 4 ? [g.slice(0, 2), g.slice(2)] : [g]))
+    .join("-");
+}
+
+function numOfNull(v) {
+  return v === "" || v == null ? null : Number(v);
+}
+
+function escape(s) {
+  return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+}
+
+function toonTarieventabel() {
+  const kop = `<tr><th>Peiljaar</th><th class="num">Standaard</th><th class="num">Elektrisch</th><th class="num">Cap</th><th class="num">Waterstof/zon</th></tr>`;
+  const rijen = Object.entries(BIJTELLING_TARIEVEN).map(([jaar, t]) => {
+    const cap = (c) => (c == null ? "–" : euroHeel.format(c));
+    return `<tr><td>${jaar}</td><td class="num">${t.standaard}%</td><td class="num">${t.elektrisch.pct}%</td>` +
+      `<td class="num">${cap(t.elektrisch.cap)}</td><td class="num">${t.waterstof.pct}%${t.waterstof.cap ? ` (cap ${cap(t.waterstof.cap)})` : ""}</td></tr>`;
+  });
+  $("tarieventabel").innerHTML = kop + rijen.join("");
+}
+
+</script>
+  <script>
+// Kentekencheck: bijtelling voor één kenteken en één maand.
+
+let voertuig = null;
+
+// ---------- UI ----------
+
+function geselecteerdeMaand() {
+  const [j, m] = $("maand").value.split("-").map(Number);
+  return new Date(j, m - 1, 1);
+}
+
+function toonVoertuig(v) {
+  $("voertuigNaam").textContent = `${v.merk ?? ""} ${v.model ?? ""}`.trim() || v.kenteken;
+  $("dToelating").textContent = v.eersteToelating ? datumFmt.format(v.eersteToelating) : "onbekend";
+  $("dTenaamstelling").textContent = v.eersteTenaamstellingNL ? datumFmt.format(v.eersteTenaamstellingNL) : "onbekend";
+  $("dBrandstof").textContent = v.brandstoffen.length ? v.brandstoffen.join(" + ") : "onbekend";
+  $("dCatalogus").textContent = v.catalogusprijs ? euroHeel.format(v.catalogusprijs) : "niet geregistreerd";
+  $("catalogusprijs").value = v.catalogusprijs ?? "";
+  $("categorie").value = bepaalCategorie(v.brandstoffen);
+  $("dagwaarde").value = "";
+  $("resultaat").hidden = false;
+}
+
+function herbereken() {
+  if (!voertuig?.eersteToelating) return;
+  const maand = geselecteerdeMaand();
+  // Volle maanden tussen de datum eerste toelating en de 1e van de gekozen maand.
+  const maanden = maandenTussen(voertuig.eersteToelating, maand) - (voertuig.eersteToelating.getDate() > 1 ? 1 : 0);
+  $("dLeeftijd").textContent = maanden < 0 ? "nog niet toegelaten" : `${maanden} ${maanden === 1 ? "maand" : "maanden"}`;
+
+  const youngtimer = isYoungtimer(voertuig.eersteToelating, maand);
+  $("dagwaardeLabel").hidden = !youngtimer;
+
+  const r = berekenBijtelling({
+    eersteToelating: voertuig.eersteToelating,
+    eersteTenaamstelling: voertuig.eersteTenaamstellingNL,
+    maand,
+    catalogusprijs: numOfNull($("catalogusprijs").value),
+    categorie: $("categorie").value,
+    dagwaarde: numOfNull($("dagwaarde").value),
+  });
+
+  $("maandLabel").textContent = maandFmt.format(maand);
+  $("perMaand").textContent = euro.format(r.perMaand);
+
+  const rijen = r.regels.map((x) => rij(x.omschrijving, euro.format(x.jaar), euro.format(x.jaar / 12)));
+  rijen.unshift(`<tr><th></th><th class="num">Per jaar</th><th class="num">Per maand</th></tr>`);
+  rijen.push(rij("Bijtelling", euro.format(r.perJaar), euro.format(r.perMaand), "som"));
+  $("opbouw").innerHTML = rijen.join("");
+
+  $("toelichting").innerHTML = [
+    ...r.waarschuwingen.map((t) => `<li class="waarschuwing">${escape(t)}</li>`),
+    ...r.toelichting.map((t) => `<li>${escape(t)}</li>`),
+  ].join("");
+
+  laatsteBerekening = { maand, maanden, r };
+}
+
+// ---------- Kopiëren ----------
+
+let laatsteBerekening = null;
+
+function kopieerGegevens() {
+  const { maand, maanden, r } = laatsteBerekening;
+  const v = voertuig;
+  const titel = `Bijtelling ${maandFmt.format(maand)} – ${formatteerKenteken(v.kenteken)}`;
+  const gegevens = [
+    ["Kenteken", formatteerKenteken(v.kenteken)],
+    ["Auto", `${v.merk ?? ""} ${v.model ?? ""}`.trim()],
+    ["Datum eerste toelating", datumFmt.format(v.eersteToelating)],
+    ["Eerste tenaamstelling NL", v.eersteTenaamstellingNL ? datumFmt.format(v.eersteTenaamstellingNL) : "onbekend"],
+    ["Leeftijd op 1e van de maand", `${maanden} maanden`],
+    ["Brandstof", v.brandstoffen.join(" + ") || "onbekend"],
+    ["Categorie", $("categorie").selectedOptions[0].text],
+    r.youngtimer
+      ? ["Waarde in het economisch verkeer", euroHeel.format(numOfNull($("dagwaarde").value) ?? 0)]
+      : ["Catalogusprijs", euroHeel.format(numOfNull($("catalogusprijs").value) ?? 0)],
+  ];
+  const opbouw = [
+    ...r.regels.map((x) => [x.omschrijving, euro.format(x.jaar), euro.format(x.jaar / 12)]),
+    ["Bijtelling", euro.format(r.perJaar), euro.format(r.perMaand)],
+  ];
+  const notities = [...r.waarschuwingen, ...r.toelichting];
+  const voet = `Berekend op ${datumFmt.format(new Date())} met gegevens van RDW Open Data.`;
+
+  const font = "font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#222222;";
+  const cel = `${font}border:1px solid #bfbfbf;padding:4px 8px;`;
+  const num = `${cel}text-align:right;`;
+  const html =
+    `<div style="${font}">` +
+    `<h2 style="font-family:Calibri,Arial,sans-serif;font-size:14pt;color:#1f3864;margin:0 0 8pt;">${escape(titel)}</h2>` +
+    `<table style="border-collapse:collapse;margin-bottom:10pt;">` +
+    gegevens.map(([k, w]) => `<tr><td style="${cel}background:#f2f2f2;">${escape(k)}</td><td style="${cel}">${escape(w)}</td></tr>`).join("") +
+    `</table>` +
+    `<table style="border-collapse:collapse;margin-bottom:10pt;">` +
+    `<tr><th style="${cel}background:#1f3864;color:#fff;text-align:left;">Opbouw</th>` +
+    `<th style="${num}background:#1f3864;color:#fff;">Per jaar</th><th style="${num}background:#1f3864;color:#fff;">Per maand</th></tr>` +
+    opbouw.map(([o, j, m], i) => {
+      const vet = i === opbouw.length - 1 ? "font-weight:bold;background:#f2f2f2;" : "";
+      return `<tr><td style="${cel}${vet}">${escape(o)}</td><td style="${num}${vet}">${j}</td><td style="${num}${vet}">${m}</td></tr>`;
+    }).join("") +
+    `</table>` +
+    notities.map((t) => `<p style="${font}margin:0 0 4pt;">${escape(t)}</p>`).join("") +
+    `<p style="${font}color:#7f7f7f;font-size:9pt;margin:6pt 0 0;">${escape(voet)}</p>` +
+    `</div>`;
+
+  const tekst = [
+    titel,
+    "",
+    ...gegevens.map(([k, w]) => `${k}:\t${w}`),
+    "",
+    "Opbouw\tPer jaar\tPer maand",
+    ...opbouw.map((x) => x.join("\t")),
+    "",
+    ...notities,
+    "",
+    voet,
+  ].join("\n");
+
+  return schrijfKlembord(html, tekst);
+}
+
+async function schrijfKlembord(html, tekst) {
+  if (navigator.clipboard && window.ClipboardItem) {
+    try {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "text/html": new Blob([html], { type: "text/html" }),
+          "text/plain": new Blob([tekst], { type: "text/plain" }),
+        }),
+      ]);
+      return true;
+    } catch {
+      // Valt terug op execCommand hieronder.
+    }
+  }
+  const tijdelijk = document.createElement("div");
+  tijdelijk.contentEditable = "true";
+  tijdelijk.style.cssText = "position:fixed;left:-9999px;top:0;";
+  tijdelijk.innerHTML = html;
+  document.body.append(tijdelijk);
+  const selectie = getSelection();
+  selectie.removeAllRanges();
+  const bereik = document.createRange();
+  bereik.selectNodeContents(tijdelijk);
+  selectie.addRange(bereik);
+  const gelukt = document.execCommand("copy");
+  selectie.removeAllRanges();
+  tijdelijk.remove();
+  return gelukt;
+}
+
+async function kopieer() {
+  if (!laatsteBerekening) return;
+  const knop = $("kopieer");
+  const gelukt = await kopieerGegevens();
+  knop.textContent = gelukt ? "Gekopieerd ✓" : "Kopiëren mislukt";
+  clearTimeout(knop._timer);
+  knop._timer = setTimeout(() => (knop.textContent = "Kopiëren"), 2000);
+}
+
+function rij(omschrijving, jaar, maand, cls = "") {
+  return `<tr class="${cls}"><td>${escape(omschrijving)}</td><td class="num">${jaar}</td><td class="num">${maand}</td></tr>`;
+}
+
+function toonMelding(tekst) {
+  $("melding").textContent = tekst;
+  $("melding").hidden = !tekst;
+}
+
+async function zoek(e) {
+  e.preventDefault();
+  const kenteken = normaliseerKenteken($("kenteken").value);
+  if (!kenteken) return;
+
+  toonMelding("");
+  $("ophalen").disabled = true;
+  try {
+    const v = await haalVoertuigOp(kenteken);
+    if (!v) {
+      toonMelding(`Kenteken ${kenteken} niet gevonden bij de RDW.`);
+      return;
+    }
+    if (!v.eersteToelating) {
+      toonMelding("De RDW geeft geen datum eerste toelating voor dit voertuig; berekenen is niet mogelijk.");
+      return;
+    }
+    voertuig = v;
+    toonVoertuig(v);
+    herbereken();
+  } catch (err) {
+    toonMelding(`Ophalen mislukt: ${err.message}`);
+  } finally {
+    $("ophalen").disabled = false;
+  }
+}
+
+function init() {
+  const nu = new Date();
+  $("maand").value = `${nu.getFullYear()}-${String(nu.getMonth() + 1).padStart(2, "0")}`;
+  toonTarieventabel();
+
+  $("zoek").addEventListener("submit", zoek);
+  $("kopieer").addEventListener("click", kopieer);
+  $("maand").addEventListener("change", herbereken);
+  for (const id of ["catalogusprijs", "categorie", "dagwaarde"]) {
+    $(id).addEventListener("input", herbereken);
+  }
+
+  const kenteken = new URLSearchParams(location.search).get("kenteken");
+  if (kenteken) {
+    $("kenteken").value = kenteken;
+    $("zoek").requestSubmit();
+  }
+}
+
+init();
+
+</script>
+</body>
+</html>

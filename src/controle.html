@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bijtelling Excel-controle</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Bijtelling Excel-controle</h1>
+      <p class="sub">Controleer een Excel-lijst met auto's van de zaak tegen de RDW en de bijtellingsregels.</p>
+    </header>
+
+    <form id="controleForm" class="card" autocomplete="off">
+      <div class="row">
+        <label class="grow">Excel-bestand (.xlsx, .xls of .csv)
+          <input id="excelBestand" type="file" accept=".xlsx,.xls,.csv" required>
+        </label>
+        <label>Controlemaand
+          <input id="controleMaand" type="month" required>
+        </label>
+        <button type="submit" id="controleStart">Controleren</button>
+      </div>
+      <p class="klein">
+        De lijst wordt alleen in je browser gelezen; alleen de kentekens gaan naar de RDW.
+        Alle regels worden gecontroleerd voor de controlemaand.
+      </p>
+      <p id="controleVoortgang" class="klein"></p>
+      <p id="controleMelding" class="melding" hidden></p>
+    </form>
+
+    <section id="controleResultaat" class="card" hidden>
+      <div class="kop">
+        <div id="controleSamenvatting" class="samenvatting"></div>
+        <button type="button" id="controleDownload" class="secundair">Download Excel</button>
+      </div>
+      <label class="check"><input type="checkbox" id="alleenAfwijkingen" checked> Alleen afwijkingen tonen</label>
+      <div class="scroll">
+        <table id="controleTabel" class="controle"></table>
+      </div>
+    </section>
+
+    <section class="card uitleg">
+      <h2>Wat wordt er gecontroleerd?</h2>
+      <p class="klein">Verwacht in de lijst o.a. de kolommen <em>Kenteken</em>, <em>1e Toelating</em>, <em>Afgifte NL</em>,
+        <em>Cataloguswaarde</em>, <em>% Bijtelling</em>, <em>Reden geen bijtelling</em>, <em>Brandstof</em>,
+        <em>StartDatum</em> en <em>Einddatum</em>. De kopregel hoeft niet bovenaan te staan.</p>
+      <ul>
+        <li><strong>Fout:</strong> kenteken onbekend bij de RDW, 1e toelating of cataloguswaarde wijkt af van de RDW (bij youngtimers wordt de cataloguswaarde niet gecontroleerd, daar staat de dagwaarde),
+          of het % bijtelling klopt niet met de regels voor die maand.</li>
+        <li><strong>Let op:</strong> brandstof of afgifte NL wijkt af van de RDW, of de 60-maandstermijn
+          loopt binnen 3 maanden af waardoor het percentage wijzigt.</li>
+        <li><strong>Info:</strong> auto niet ter beschikking in de controlemaand (StartDatum/Einddatum; dan wordt de
+          eerste of laatste maand gecontroleerd), of reden geen bijtelling ingevuld.</li>
+      </ul>
+      <p class="klein">In <em>% Bijtelling</em> tellen alleen de getallen, niet de formulering: getallen met % zijn
+        percentages, bedragen vanaf 10.000 de cap (laagste percentage tot de cap, hoogste daarboven). Daarmee wordt de
+        bijtelling berekend en vergeleken met de verwachte bijtelling; bij een verschil zie je hoeveel per maand te hoog of te laag.
+        De download bevat de oorspronkelijke kolommen plus de controlekolommen.</p>
+    </section>
+
+    <!-- deel: uitleg.html -->
+  </main>
+
+  <script src="vendor/xlsx.full.min.js"></script>
+  <script src="tarieven.js"></script>
+  <script src="rekenen.js"></script>
+  <script src="controle.js"></script>
+</body>
+</html>
